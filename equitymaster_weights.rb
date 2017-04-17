@@ -2,6 +2,7 @@ require 'open-uri'
 require 'nokogiri'
 require 'csv'
 require 'rubyfish'
+require 'json'
 
 ##url from which the weights are fetched
 URL = "https://www.equitymaster.com/india-markets/nse-replica.asp"
@@ -10,7 +11,7 @@ URL = "https://www.equitymaster.com/india-markets/nse-replica.asp"
 CSV_FILE_NAME = "baba_weights.csv"
 
 ##company names used in baba's actual program internally
-COMPANY_NAMES = ["TCS", "ONGC", "RELIANCE", "ITC", "INFY", "SBIN", "HDFCBANK", "COALINDIA", "ICICIBANK", "HDFC", "SUNPHARMA", "HINDUNILVR", "TATAMOTORS", "BHARTIARTL", "LT", "WIPRO", "NTPC", "HCLTECH", "AXISBANK", "MARUTI", "KOTAKBANK", "M&M", "BAJAJ-AUTO", "POWERGRID", "ASIANPAINT", "BHEL", "SSLT", "ULTRACEMCO", "LUPIN", "HEROMOTOCO", "TECHM", "GAIL", "DRREDDY", "NMDC", "BPCL", "CIPLA", "CAIRN", "BANKBARODA", "TATASTEEL", "INDUSINDBANK", "PNB", "ZEEL", "HINDALCO", "AMBUJACEM", "GRASIM", "ACC", "DLF", "IDFC", "TATAPOWER", "JINDALSTEL", "IDEA", "YESBANK", "BOSCHLTD", "VEDL", "ADANIPORTS"]
+COMPANY_NAMES = ["TCS", "ONGC", "RELIANCE", "ITC", "INFY", "SBIN", "HDFCBANK", "COALINDIA", "ICICIBANK", "HDFC", "SUNPHARMA", "HINDUNILVR", "TATAMOTORS", "BHARTIARTL", "LT", "WIPRO", "NTPC", "HCLTECH", "AXISBANK", "MARUTI", "KOTAKBANK", "M&M", "BAJAJ-AUTO", "POWERGRID", "ASIANPAINT", "BHEL", "SSLT", "ULTRACEMCO", "LUPIN", "HEROMOTOCO", "TECHM", "GAIL", "DRREDDY", "NMDC", "BPCL", "CIPLA", "CAIRN", "BANKBARODA", "TATASTEEL", "INDUSINDBANK", "PNB", "ZEEL", "HINDALCO", "AMBUJACEM", "GRASIM", "ACC", "DLF", "IDFC", "TATAPOWER", "JINDALSTEL", "IDEA", "YESBANK", "BOSCHLTD", "VEDL", "ADANIPORTS","IOC","AUROPHARMA","INFRATEL","IBULHSGFIN","TATAMTRDVR","EICHERMOT"]
 
 ##threshold for the jaro_distance
 JARO_THRESH = 0.64
@@ -20,7 +21,8 @@ JARO_THRESH = 0.64
 def _load_url
 	begin
 		Nokogiri::HTML(open(URL))
-	rescue
+	rescue => e
+		puts e
 		nil
 	end
 end
@@ -31,6 +33,8 @@ end
 def _parse_table
 	weights_hash = {}
 	ignored_companies_hash = {}
+	##THESE COMPANIES FOR SOME REASON LAND UP GETTING IGNORED, PROBABLY BECAUSE THE TOP MATCH COMES FOR OTHER COMPANIES FROM THE SAME NAME, so I had to hard code them.
+	companies_that_dont_work_by_jaro = {"mm" => "M&M","tatamotorsdvr" => "TATAMTRDVR", "bhartiinfratel" => "INFRATEL"}
 	if el = _load_url
 		el.css("table").each_with_index {|tb,tb_index|
 			if tb_index == 5
@@ -38,17 +42,21 @@ def _parse_table
 					if row.css("td").size > 0
 						company_name_in_table = row.css('td')[0].text.strip.downcase.gsub(/\s|[[:punct:]]/) { |match| "" }
 
-						puts company_name_in_table.to_s
-						levenstein_hash = Hash[COMPANY_NAMES.map{|c|
-							[{"company" => c, "company_name_in_table" => company_name_in_table},RubyFish::Jaro.distance(c.downcase,company_name_in_table)]
-						}]
-						levenstein_hash = levenstein_hash.delete_if{|key,value| value < JARO_THRESH}.sort_by { |k,v| -v }
-
-						if levenstein_hash.empty?
-							ignored_companies_hash[company_name_in_table] = {}
-							[nil,nil]
+						##if condition handling the companies that dont work by jaro
+						if companies_that_dont_work_by_jaro[company_name_in_table]
+							[{"company" => companies_that_dont_work_by_jaro[company_name_in_table], "company_name_in_table" => company_name_in_table, "weightage" => row.css('td')[7].text.to_f},{"jaro_score" => 1.0}]
 						else
-							[levenstein_hash[0][0].merge({"weightage" => row.css('td')[7].text.to_f}),{"jaro_score" => levenstein_hash[0][1]}]
+							levenstein_hash = Hash[COMPANY_NAMES.map{|c|
+								[{"company" => c, "company_name_in_table" => company_name_in_table},RubyFish::Jaro.distance(c.downcase,company_name_in_table)]
+							}]
+							levenstein_hash = levenstein_hash.delete_if{|key,value| value < JARO_THRESH}.sort_by { |k,v| -v }
+
+							if levenstein_hash.empty?
+								ignored_companies_hash[company_name_in_table] = {}
+								[nil,nil]
+							else
+								[levenstein_hash[0][0].merge({"weightage" => row.css('td')[7].text.to_f}),{"jaro_score" => levenstein_hash[0][1]}]
+							end
 						end
 					else
 						[nil,nil]
@@ -103,5 +111,6 @@ def _parse_table
 end
 
 wh = _parse_table
+puts JSON.pretty_generate(wh)
 hash_to_write_to_csv = Hash[(wh["weights_hash"].keys + wh["ignored_companies_hash"].values.map{|c| c["company_name_in_table"]}).zip(wh["weights_hash"].keys.map{|c| wh["weights_hash"][c]["weightage"]})]
 f = CSV.open(CSV_FILE_NAME, "w+") {|csv| hash_to_write_to_csv.to_a.each {|elem| csv << elem} }
