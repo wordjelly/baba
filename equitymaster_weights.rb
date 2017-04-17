@@ -2,7 +2,7 @@ require 'open-uri'
 require 'nokogiri'
 require 'csv'
 require 'rubyfish'
-require 'json'
+
 
 ##url from which the weights are fetched
 URL = "https://www.equitymaster.com/india-markets/nse-replica.asp"
@@ -111,6 +111,6 @@ def _parse_table
 end
 
 wh = _parse_table
-puts JSON.pretty_generate(wh)
+
 hash_to_write_to_csv = Hash[(wh["weights_hash"].keys + wh["ignored_companies_hash"].values.map{|c| c["company_name_in_table"]}).zip(wh["weights_hash"].keys.map{|c| wh["weights_hash"][c]["weightage"]})]
 f = CSV.open(CSV_FILE_NAME, "w+") {|csv| hash_to_write_to_csv.to_a.each {|elem| csv << elem} }
