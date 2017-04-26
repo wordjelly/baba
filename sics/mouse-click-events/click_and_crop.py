@@ -4,6 +4,9 @@
 # import the necessary packages
 import argparse
 import cv2
+import matplotlib.pyplot as plt
+
+
 
 # initialize the list of reference points and boolean indicating
 # whether cropping is being performed or not
@@ -61,8 +64,10 @@ while True:
 # from teh image and display it
 if len(refPt) == 2:
 	roi = clone[refPt[0][1]:refPt[1][1], refPt[0][0]:refPt[1][0]]
-	cv2.imshow("ROI", roi)
-	cv2.waitKey(0)
+	plt.imshow(roi, cmap='gray')
+	plt.show()
+	#cv2.imshow("ROI", roi)
+	#cv2.waitKey(0)
 
 # close all open windows
-cv2.destroyAllWindows()
+#cv2.destroyAllWindows()
