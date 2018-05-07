@@ -11,7 +11,7 @@ URL = "https://www.equitymaster.com/india-markets/nse-replica.asp"
 CSV_FILE_NAME = "baba_weights.csv"
 
 ##company names used in baba's actual program internally
-COMPANY_NAMES = ["TCS", "ONGC", "RELIANCE", "ITC", "INFY", "SBIN", "HDFCBANK", "COALINDIA", "ICICIBANK", "HDFC", "SUNPHARMA", "HINDUNILVR", "TATAMOTORS", "BHARTIARTL", "LT", "WIPRO", "NTPC", "HCLTECH", "AXISBANK", "MARUTI", "KOTAKBANK", "M&M", "BAJAJ-AUTO", "POWERGRID", "ASIANPAINT", "BHEL", "SSLT", "ULTRACEMCO", "LUPIN", "HEROMOTOCO", "TECHM", "GAIL", "DRREDDY", "NMDC", "BPCL", "CIPLA", "CAIRN", "BANKBARODA", "TATASTEEL", "INDUSINDBANK", "PNB", "ZEEL", "HINDALCO", "AMBUJACEM", "GRASIM", "ACC", "DLF", "IDFC", "TATAPOWER", "JINDALSTEL", "IDEA", "YESBANK", "BOSCHLTD", "VEDL", "ADANIPORTS","IOC","AUROPHARMA","INFRATEL","IBULHSGFIN","TATAMTRDVR","EICHERMOT"]
+COMPANY_NAMES = ["TCS", "ONGC", "RELIANCE", "ITC", "INFY", "SBIN", "HDFCBANK", "COALINDIA", "ICICIBANK", "HDFC", "SUNPHARMA", "HINDUNILVR", "TATAMOTORS", "BHARTIARTL", "LT", "WIPRO", "NTPC", "HCLTECH", "AXISBANK", "MARUTI", "KOTAKBANK", "M&M", "BAJAJ-AUTO", "POWERGRID", "ASIANPAINT", "BHEL", "SSLT", "ULTRACEMCO", "LUPIN", "HEROMOTOCO", "TECHM", "GAIL", "DRREDDY", "NMDC", "BPCL", "CIPLA", "CAIRN", "BANKBARODA", "TATASTEEL", "INDUSINDBANK", "PNB", "ZEEL", "HINDALCO", "AMBUJACEM", "GRASIM", "ACC", "DLF", "IDFC", "TATAPOWER", "JINDALSTEL", "IDEA", "YESBANK", "BOSCHLTD", "VEDL", "ADANIPORTS","IOC","AUROPHARMA","INFRATEL","IBULHSGFIN","TATAMTRDVR","EICHERMOT","BAJFINANCE","BAJAJFINSV","HINDPETRO","TITAN","UPL"]
 
 ##threshold for the jaro_distance
 JARO_THRESH = 0.64
@@ -34,7 +34,7 @@ def _parse_table
 	weights_hash = {}
 	ignored_companies_hash = {}
 	##THESE COMPANIES FOR SOME REASON LAND UP GETTING IGNORED, PROBABLY BECAUSE THE TOP MATCH COMES FOR OTHER COMPANIES FROM THE SAME NAME, so I had to hard code them.
-	companies_that_dont_work_by_jaro = {"mm" => "M&M","tatamotorsdvr" => "TATAMTRDVR", "bhartiinfratel" => "INFRATEL"}
+	companies_that_dont_work_by_jaro = {"mm" => "M&M","tatamotorsdvr" => "TATAMTRDVR", "bhartiinfratel" => "INFRATEL", "hpcl" => "HINDPETRO"}
 	if el = _load_url
 		el.css("table").each_with_index {|tb,tb_index|
 			if tb_index == 5
