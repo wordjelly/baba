@@ -35,7 +35,7 @@ var interval = setInterval(function(){
     $(".left.pagenationicnryt").first().trigger("click");
     if(timesRun === 4){
         clearInterval(interval);
-        makeTextFile(localStorage.getItem("medicines"));
+        console.log(makeTextFile(localStorage.getItem("medicines")));
     }
     parse_page();
 }, 3000); 
